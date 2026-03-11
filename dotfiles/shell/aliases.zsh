@@ -1,0 +1,16 @@
+# Common aliases shared across WSL and OrbStack.
+
+alias ll='ls -lah'
+alias la='ls -A'
+alias l='ls -CF'
+alias gs='git status -sb'
+alias ga='git add'
+alias gc='git commit'
+alias gp='git push'
+alias gl='git pull --ff-only'
+alias dc='docker compose'
+alias py='python3'
+alias v='nvim'
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ws='cd ~/workspace'

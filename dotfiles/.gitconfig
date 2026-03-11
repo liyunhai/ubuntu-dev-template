@@ -1,0 +1,19 @@
+[user]
+    name = Your Name
+    email = you@example.com
+
+[init]
+    defaultBranch = main
+
+[pull]
+    ff = only
+
+[push]
+    autoSetupRemote = true
+
+[core]
+    editor = vim
+    excludesfile = ~/.gitignore_global
+
+[color]
+    ui = auto

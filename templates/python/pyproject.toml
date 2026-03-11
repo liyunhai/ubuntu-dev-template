@@ -1,0 +1,14 @@
+[project]
+name = "sample-python-app"
+version = "0.1.0"
+description = "Sample Python project template for the Ubuntu dev template"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.black]
+line-length = 88
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"

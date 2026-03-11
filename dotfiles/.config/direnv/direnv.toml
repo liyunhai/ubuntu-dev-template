@@ -1,0 +1,8 @@
+# direnv configuration
+#
+# Keep the config minimal. Additional allowlist or stdlib customization can be
+# added later if your workflow needs it.
+
+[global]
+log_format = "direnv: %s"
+warn_timeout = "5s"
