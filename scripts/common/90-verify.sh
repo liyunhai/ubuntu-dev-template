@@ -1,33 +1,49 @@
 #!/usr/bin/env bash
-# =============================================================================
+set -euo pipefail
+
+###############################################################################
 # 90-verify.sh
-# =============================================================================
-# Purpose:
-#   Run all verification scripts in the checks directory.
 #
-# Why this exists:
-#   The template should be treated like a reproducible asset. A single command
-#   that checks the expected tools and services makes iteration much easier.
-# =============================================================================
-set -Eeuo pipefail
+# 作用：
+#   统一执行模板中的所有验证脚本。
+#
+# 说明：
+#   - 每个验证脚本负责一个模块
+#   - 本脚本只负责按顺序调用，并给出整体结果
+#   - 如果其中任何一个脚本返回非 0，本脚本会直接失败退出
+###############################################################################
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+CHECKS_DIR="${REPO_ROOT}/checks"
 
-main() {
-  echo "[90-verify] running checks..."
-  bash "$REPO_ROOT/checks/verify-shell.sh"
-  bash "$REPO_ROOT/checks/verify-python.sh"
-  bash "$REPO_ROOT/checks/verify-node.sh"
-  bash "$REPO_ROOT/checks/verify-postgres.sh"
-  bash "$REPO_ROOT/checks/verify-nginx.sh"
+log() {
+  printf '[90-verify] %s\n' "$*"
+}
 
-  if command -v docker >/dev/null 2>&1; then
-    bash "$REPO_ROOT/checks/verify-docker.sh"
-  else
-    echo "[90-verify] docker not present; skipping docker check."
+run_check() {
+  local check_script="$1"
+
+  if [ ! -x "${check_script}" ]; then
+    log "making executable: ${check_script}"
+    chmod +x "${check_script}"
   fi
 
-  echo "[90-verify] all requested checks completed."
+  "${check_script}"
+}
+
+main() {
+  log "running checks..."
+
+  run_check "${CHECKS_DIR}/verify-shell.sh"
+  run_check "${CHECKS_DIR}/verify-tmux.sh"
+  run_check "${CHECKS_DIR}/verify-python.sh"
+  run_check "${CHECKS_DIR}/verify-node.sh"
+  run_check "${CHECKS_DIR}/verify-postgres.sh"
+  run_check "${CHECKS_DIR}/verify-nginx.sh"
+  run_check "${CHECKS_DIR}/verify-docker.sh"
+
+  log "all checks passed"
 }
 
 main "$@"
