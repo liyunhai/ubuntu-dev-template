@@ -1,0 +1,11 @@
+# ~/.config/yazi/package.toml
+
+[flavor]
+deps = [
+  { use = "dangooddd/kanagawa" },
+]
+
+[plugin]
+deps = [
+  { use = "yazi-rs/plugins:git" },
+]

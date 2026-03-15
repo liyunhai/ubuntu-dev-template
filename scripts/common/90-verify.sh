@@ -37,6 +37,7 @@ main() {
 
   run_check "${CHECKS_DIR}/verify-shell.sh"
   run_check "${CHECKS_DIR}/verify-tmux.sh"
+  run_check "${CHECKS_DIR}/verify-yazi.sh"
   run_check "${CHECKS_DIR}/verify-python.sh"
   run_check "${CHECKS_DIR}/verify-node.sh"
   run_check "${CHECKS_DIR}/verify-postgres.sh"
