@@ -20,16 +20,17 @@ release_asset() {
 }
 
 install_zellij() (
-  local asset tmpdir archive checksum_file
+  local asset checksum_asset tmpdir archive checksum_file
   asset="$(release_asset)"
+  checksum_asset="${asset%.tar.gz}.sha256sum"
   tmpdir="$(mktemp -d)"
   trap 'rm -rf -- "$tmpdir"' EXIT
   archive="${tmpdir}/${asset}"
-  checksum_file="${archive}.sha256sum"
+  checksum_file="${tmpdir}/${checksum_asset}"
 
   log "downloading latest stable release for $(uname -m)..."
+  curl -fL --retry 3 "https://github.com/zellij-org/zellij/releases/latest/download/${checksum_asset}" -o "$checksum_file"
   curl -fL --retry 3 "https://github.com/zellij-org/zellij/releases/latest/download/${asset}" -o "$archive"
-  curl -fL --retry 3 "https://github.com/zellij-org/zellij/releases/latest/download/${asset}.sha256sum" -o "$checksum_file"
   (cd "$tmpdir" && sha256sum -c "$(basename "$checksum_file")")
 
   tar -xzf "$archive" -C "$tmpdir"
