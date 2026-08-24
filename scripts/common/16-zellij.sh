@@ -20,7 +20,7 @@ release_asset() {
 }
 
 install_zellij() (
-  local asset checksum_asset tmpdir archive checksum_file
+  local asset checksum_asset tmpdir archive checksum_file expected_checksum
   asset="$(release_asset)"
   checksum_asset="${asset%.tar.gz}.sha256sum"
   tmpdir="$(mktemp -d)"
@@ -31,10 +31,13 @@ install_zellij() (
   log "downloading latest stable release for $(uname -m)..."
   curl -fL --retry 3 "https://github.com/zellij-org/zellij/releases/latest/download/${checksum_asset}" -o "$checksum_file"
   curl -fL --retry 3 "https://github.com/zellij-org/zellij/releases/latest/download/${asset}" -o "$archive"
-  (cd "$tmpdir" && sha256sum -c "$(basename "$checksum_file")")
-
   tar -xzf "$archive" -C "$tmpdir"
   [[ -x "${tmpdir}/zellij" ]] || die "release archive does not contain zellij"
+
+  expected_checksum="$(awk 'NR == 1 { print $1 }' "$checksum_file")"
+  [[ "$expected_checksum" =~ ^[[:xdigit:]]{64}$ ]] || die "invalid release checksum"
+  printf '%s  %s\n' "$expected_checksum" "${tmpdir}/zellij" | sha256sum -c -
+
   mkdir -p "$INSTALL_DIR"
   install -m 0755 "${tmpdir}/zellij" "${INSTALL_DIR}/zellij"
 )
