@@ -27,6 +27,20 @@ If not, add it and re-login:
 sudo usermod -aG docker "$USER"
 ```
 
+Then open a new login session. Running `newgrp docker` can update the current
+terminal temporarily, but a fresh login is the recommended final check.
+
+## Docker installer says systemd is not active
+
+Regular Ubuntu Server and VMware Fusion guests should boot with systemd. Check:
+
+```bash
+ps -p 1 -o comm=
+```
+
+On WSL, run `scripts/wsl/01-write-wslconf.sh`, execute `wsl --shutdown` from
+Windows, reopen Ubuntu, and rerun the installer.
+
 ## nvm not found after install
 Reload shell or source your shell config:
 

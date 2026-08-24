@@ -3,8 +3,8 @@
 ## Layered model
 
 ### L0 Host / virtualization
-- WSL 2 on Windows 11, or OrbStack machine on macOS
-- Ubuntu 24.04 base machine
+- WSL 2 on Windows 11, OrbStack on macOS, or a regular Ubuntu VM
+- Ubuntu Server base machine
 - systemd enabled where appropriate
 
 ### L1 Base packages
@@ -37,7 +37,7 @@ Common tools used by everything else:
 - Other data services containerized when useful
 
 ### L6 Containers
-- WSL: native Docker Engine inside Ubuntu
+- Ubuntu VM / WSL: native Docker Engine inside Ubuntu
 - OrbStack: prefer built-in engine provided by OrbStack
 
 ### L7 Dev quality / tooling

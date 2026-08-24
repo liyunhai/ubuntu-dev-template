@@ -1,9 +1,11 @@
 # Ubuntu Dev Template
 
-A cross-platform Ubuntu 24.04 development template for:
+A cross-platform Ubuntu development template for:
 
 - Windows 11 + WSL 2
 - macOS + OrbStack Ubuntu machines
+- macOS + VMware Fusion Ubuntu virtual machines
+- regular Ubuntu Server installations
 
 This repository provides:
 
@@ -29,11 +31,29 @@ This repository provides:
 - Database: PostgreSQL native, other DBs primarily via containers
 - Web server: nginx native
 - Containers:
-  - WSL: native Docker Engine inside Ubuntu
+  - Ubuntu VM / WSL: native Docker Engine inside Ubuntu
   - OrbStack: prefer OrbStack's built-in container engine
 - Workspace root: `~/workspace`
 
-## Installation order
+## One-command installation
+
+Run the complete setup from the repository root:
+
+```bash
+./bootstrap.sh
+```
+
+The script detects regular Ubuntu, WSL, or OrbStack automatically. Preview the
+full execution order without changing the system:
+
+```bash
+./bootstrap.sh --dry-run
+```
+
+On WSL without systemd, the first run writes `/etc/wsl.conf` and stops. Run
+`wsl --shutdown` from Windows, reopen Ubuntu, and run `./bootstrap.sh` again.
+
+## Individual installation
 
 `00-base.sh` and `10-shell.sh` are the required foundation. Run both first:
 
@@ -55,12 +75,22 @@ scripts/common/40-node.sh
 scripts/common/50-db-clients.sh
 scripts/common/60-postgres.sh
 scripts/common/70-nginx.sh
+scripts/common/75-docker-engine.sh            # Ubuntu VM / WSL
 scripts/wsl/00-wsl-preflight.sh           # WSL only
 scripts/wsl/01-write-wslconf.sh           # WSL only
-scripts/wsl/02-docker-engine.sh           # WSL only
+scripts/wsl/02-docker-engine.sh           # WSL compatibility entry point
 scripts/common/80-devtools.sh
 scripts/common/90-verify.sh
 ```
+
+For VMware Fusion or another regular Ubuntu VM, install Docker directly with:
+
+```bash
+./scripts/common/75-docker-engine.sh
+```
+
+Open a new login session after Docker installation so membership in the
+`docker` group takes effect.
 
 The terminal tools can coexist. They are not configured to start or nest one
 another automatically:
@@ -86,6 +116,8 @@ eval "$(python3 scripts/common/99-proxy-switch.py off)"
 - **Fonts are installed on the host OS**, not inside WSL/Ubuntu.
 - On WSL, keep active projects under the Linux filesystem, e.g. `~/workspace`, not primarily under `/mnt/c/...`.
 - On OrbStack, keep Ubuntu-side paths and shell workflows aligned with WSL.
+- Docker Engine officially supports Ubuntu 26.04 Resolute; the installer derives
+  the repository suite and architecture from the running Ubuntu system.
 
 ## Reference docs
 
