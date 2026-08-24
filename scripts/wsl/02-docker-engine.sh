@@ -37,6 +37,7 @@ main() {
 
   local arch codename
   arch="$(dpkg --print-architecture)"
+  # shellcheck disable=SC1091
   codename="$(. /etc/os-release && echo "$VERSION_CODENAME")"
 
   echo "[wsl-docker] configuring apt source..."

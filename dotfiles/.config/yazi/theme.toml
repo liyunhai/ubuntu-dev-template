@@ -1,16 +1,4 @@
-# ~/.config/yazi/theme.toml
+# Minimal theme overrides using the current [mgr] schema.
 
-[manager]
+[mgr]
 cwd = { fg = "#7aa2f7", bold = true }
-
-[status]
-sep_left = { open = "", close = "" }
-sep_right = { open = "", close = "" }
-
-[filetype]
-rules = [
-  { mime = "image/*", fg = "#e0af68" },
-  { mime = "video/*", fg = "#bb9af7" },
-  { mime = "audio/*", fg = "#9ece6a" },
-  { mime = "application/pdf", fg = "#f7768e" },
-]

@@ -1,13 +1,8 @@
-# ~/.config/yazi/keymap.toml
+# Add a few bookmarks without replacing Yazi's built-in keymap.
 
 [mgr]
 prepend_keymap = [
-  { on = [ "g", "h" ], run = 'cd ~', desc = "Go to home" },
-  { on = [ "g", "w" ], run = 'cd ~/workspace', desc = "Go to workspace" },
-  { on = [ "g", "c" ], run = 'cd ~/.config', desc = "Go to ~/.config" },
-  { on = [ "!" ], run = 'shell "$SHELL" --block --confirm', desc = "Open shell here" },
-  { on = [ "e" ], run = 'open --interactive', desc = "Open interactively" },
-  { on = [ "y", "p" ], run = 'copy path', desc = "Copy file path" },
-  { on = [ "y", "n" ], run = 'copy filename', desc = "Copy filename" },
-  { on = [ "R" ], run = 'refresh', desc = "Refresh" },
+  { on = [ "g", "h" ], run = "cd ~",           desc = "Go home" },
+  { on = [ "g", "w" ], run = "cd ~/workspace", desc = "Go workspace" },
+  { on = [ "g", "c" ], run = "cd ~/.config",   desc = "Go config" },
 ]

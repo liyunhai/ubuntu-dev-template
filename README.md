@@ -22,6 +22,8 @@ This repository provides:
 ## High-level choices
 
 - Shell: zsh + Oh My Zsh + Powerlevel10k
+- Terminal workspaces: tmux + Zellij + Herdr
+- Terminal file manager: Yazi (latest stable release)
 - Python: system python + venv + pipx + uv
 - Node.js: nvm + latest LTS + pnpm
 - Database: PostgreSQL native, other DBs primarily via containers
@@ -31,11 +33,22 @@ This repository provides:
   - OrbStack: prefer OrbStack's built-in container engine
 - Workspace root: `~/workspace`
 
-## Recommended execution order
+## Installation order
+
+`00-base.sh` and `10-shell.sh` are the required foundation. Run both first:
+
+```bash
+./scripts/common/00-base.sh
+./scripts/common/10-shell.sh
+```
+
+Then run the modules you want. Every module remains a separate install script:
 
 ```text
-scripts/common/00-base.sh
-scripts/common/10-shell.sh
+scripts/common/15-tmux.sh
+scripts/common/16-zellij.sh
+scripts/common/17-herdr.sh
+scripts/common/18-yazi.sh
 scripts/common/20-direnv.sh
 scripts/common/30-python.sh
 scripts/common/40-node.sh
@@ -47,6 +60,25 @@ scripts/wsl/01-write-wslconf.sh           # WSL only
 scripts/wsl/02-docker-engine.sh           # WSL only
 scripts/common/80-devtools.sh
 scripts/common/90-verify.sh
+```
+
+The terminal tools can coexist. They are not configured to start or nest one
+another automatically:
+
+- tmux: established terminal multiplexer with TPM plugins
+- Zellij: modern general-purpose terminal workspace
+- Herdr: terminal workspace focused on coding-agent workflows
+- Yazi: terminal file manager
+
+Zellij, Herdr, and Yazi install their latest stable release to `~/.local/bin`.
+Release checksums are verified before installation. Existing user configuration
+is backed up before the template configuration is installed.
+
+The proxy helper is not an installer. Evaluate its output in the current shell:
+
+```bash
+eval "$(python3 scripts/common/99-proxy-switch.py home)"
+eval "$(python3 scripts/common/99-proxy-switch.py off)"
 ```
 
 ## Important notes
@@ -70,3 +102,6 @@ These scripts follow the official docs as closely as practical:
 - pre-commit: https://pre-commit.com/
 - PostgreSQL on Ubuntu: https://www.postgresql.org/download/linux/ubuntu/
 - Node.js download page (nvm guidance): https://nodejs.org/en/download
+- Zellij installation: https://zellij.dev/documentation/installation.html
+- Herdr installation: https://herdr.dev/docs/install/
+- Yazi installation: https://yazi-rs.github.io/docs/installation

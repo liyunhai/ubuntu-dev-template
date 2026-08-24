@@ -1,0 +1,9 @@
+// Keep this file small so Zellij's built-in defaults can evolve safely.
+// Ctrl-g enters locked mode and keeps most key presses available to programs.
+simplified_ui false
+pane_frames true
+mouse_mode true
+copy_on_select false
+scroll_buffer_size 100000
+session_serialization true
+pane_viewport_serialization true

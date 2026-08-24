@@ -23,9 +23,9 @@ yazi --version
 ya --version
 
 log "checking config directory..."
-[ -d "${HOME}/.config/yazi" ] || die "~/.config/yazi not found"
+[ -d "${HOME}/.config/yazi" ] || die "${HOME}/.config/yazi not found"
 
-for file in yazi.toml keymap.toml init.lua theme.toml package.toml; do
+for file in yazi.toml keymap.toml init.lua theme.toml; do
   [ -f "${HOME}/.config/yazi/${file}" ] || die "missing config file: ~/.config/yazi/${file}"
 done
 

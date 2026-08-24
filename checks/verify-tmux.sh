@@ -32,7 +32,7 @@ log "checking tmux command..."
 command -v tmux >/dev/null 2>&1 || die "tmux command not found"
 
 log "checking ~/.tmux.conf..."
-[ -f "${HOME}/.tmux.conf" ] || die "~/.tmux.conf not found"
+[ -f "${HOME}/.tmux.conf" ] || die "${HOME}/.tmux.conf not found"
 
 log "checking TPM..."
 [ -d "${HOME}/.tmux/plugins/tpm" ] || die "TPM not found at ~/.tmux/plugins/tpm"

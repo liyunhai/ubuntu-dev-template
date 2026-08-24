@@ -1,0 +1,6 @@
+# Keep Herdr close to its built-in defaults for forward compatibility.
+onboarding = false
+
+[terminal]
+shell_mode = "auto"
+new_cwd = "follow"

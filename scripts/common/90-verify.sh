@@ -37,6 +37,8 @@ main() {
 
   run_check "${CHECKS_DIR}/verify-shell.sh"
   run_check "${CHECKS_DIR}/verify-tmux.sh"
+  run_check "${CHECKS_DIR}/verify-zellij.sh"
+  run_check "${CHECKS_DIR}/verify-herdr.sh"
   run_check "${CHECKS_DIR}/verify-yazi.sh"
   run_check "${CHECKS_DIR}/verify-python.sh"
   run_check "${CHECKS_DIR}/verify-node.sh"

@@ -22,7 +22,7 @@ NVM_VERSION="v0.40.3"
 export NVM_DIR="$HOME/.nvm"
 
 load_nvm() {
-  # shellcheck disable=SC1090
+  # shellcheck disable=SC1091
   [[ -s "$NVM_DIR/nvm.sh" ]] && source "$NVM_DIR/nvm.sh"
 }
 

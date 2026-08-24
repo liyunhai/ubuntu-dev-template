@@ -1,2 +1,1 @@
--- ~/.config/yazi/init.lua
--- 第一版保持轻量，留作后续扩展入口。
+-- Kept intentionally empty; use Yazi's current built-in behavior.

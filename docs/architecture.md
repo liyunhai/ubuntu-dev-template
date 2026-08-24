@@ -16,6 +16,10 @@ Common tools used by everything else:
 - Oh My Zsh
 - Powerlevel10k
 - zsh plugins
+- tmux
+- Zellij
+- Herdr
+- Yazi
 - host-side Nerd Font configuration
 
 ### L3 Environment management

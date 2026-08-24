@@ -88,7 +88,7 @@ install_tmux_conf() {
 
   if [ -f "${TARGET_TMUX_CONF}" ]; then
     if cmp -s "${TEMPLATE_TMUX_CONF}" "${TARGET_TMUX_CONF}"; then
-      log "~/.tmux.conf already matches template, skipping copy"
+      log "${HOME}/.tmux.conf already matches template, skipping copy"
       return 0
     fi
 
