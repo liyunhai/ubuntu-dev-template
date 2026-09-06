@@ -98,3 +98,15 @@ In the terminal profile, select `JetBrainsMono Nerd Font`. Do not select
 `JetBrainsMono Nerd Font Mono` if GNOME Terminal renders excessive character
 spacing, and do not select the proportional `Propo` variant. Fully close and
 reopen the terminal after changing the font.
+
+## OpenVPN helper credentials need to be changed
+
+Replace the keyring entries interactively:
+
+```bash
+vpn setup
+```
+
+Remove the saved profile and credentials completely with `vpn forget`. If the
+keyring is locked after login, unlock the Login keyring in the desktop password
+prompt and retry `vpn-up`.

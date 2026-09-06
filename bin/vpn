@@ -1,0 +1,182 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+APP_ATTRIBUTE="ubuntu-dev-template-openvpn"
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/openvpn3-helper"
+PROFILE_FILE="${CONFIG_DIR}/profile"
+
+log() { printf '[vpn] %s\n' "$*"; }
+die() { printf '[vpn] ERROR: %s\n' "$*" >&2; exit 1; }
+require_command() { command -v "$1" >/dev/null 2>&1 || die "required command not found: $1"; }
+
+usage() {
+  cat <<'EOF'
+Usage:
+  vpn setup [CONFIG_NAME] [USERNAME]  Save the profile and credentials
+  vpn up                              Connect
+  vpn down                            Disconnect
+  vpn restart                         Restart the active connection
+  vpn status                          Show OpenVPN 3 sessions
+  vpn forget                          Remove saved credentials
+
+The commands vpn-up, vpn-down, vpn-restart, and vpn-status are equivalent to
+their two-word forms. Credentials are stored in the desktop Secret Service
+(GNOME Keyring on Linux Mint), never in this script or the profile file.
+EOF
+}
+
+command_from_name() {
+  case "$(basename "$0")" in
+    vpn-up) printf '%s' up ;;
+    vpn-down) printf '%s' down ;;
+    vpn-restart) printf '%s' restart ;;
+    vpn-status) printf '%s' status ;;
+    vpn) printf '%s' "${1:-}" ;;
+    *) die "unsupported command name: $(basename "$0")" ;;
+  esac
+}
+
+read_profile() {
+  [[ -r "$PROFILE_FILE" ]] || die "not configured; run: vpn setup"
+  IFS= read -r VPN_PROFILE < "$PROFILE_FILE"
+  [[ -n "$VPN_PROFILE" ]] || die "saved configuration name is empty; run: vpn setup"
+}
+
+detect_single_profile() {
+  local profiles
+  profiles="$(openvpn3 configs-list | awk '
+    /^-+$/ { in_list = 1; next }
+    in_list && NF { sub(/[[:space:]]+[0-9]{4}-[0-9]{2}-[0-9]{2}.*/, ""); print }
+  ')"
+  [[ "$(printf '%s\n' "$profiles" | sed '/^$/d' | wc -l)" -eq 1 ]] || return 1
+  printf '%s' "$profiles"
+}
+
+keyring_lookup() {
+  local kind="$1"
+  secret-tool lookup application "$APP_ATTRIBUTE" profile "$VPN_PROFILE" kind "$kind"
+}
+
+keyring_clear_profile() {
+  local profile="$1"
+  secret-tool clear application "$APP_ATTRIBUTE" profile "$profile" kind username >/dev/null 2>&1 || true
+  secret-tool clear application "$APP_ATTRIBUTE" profile "$profile" kind password >/dev/null 2>&1 || true
+}
+
+setup_credentials() {
+  local profile="${1:-}" username="${2:-}" password old_profile="" entered_username
+  require_command openvpn3
+  require_command secret-tool
+
+  if [[ -z "$profile" ]]; then
+    profile="$(detect_single_profile)" \
+      || die "pass the exact configuration name shown by: openvpn3 configs-list"
+  fi
+  openvpn3 config-manage --config "$profile" --exists --quiet \
+    || die "OpenVPN configuration not found: $profile"
+
+  [[ -n "$username" ]] || username="${profile%%@*}"
+  read -r -p "VPN username [$username]: " entered_username
+  username="${entered_username:-$username}"
+  [[ -n "$username" ]] || die "username cannot be empty"
+  read -r -s -p "VPN password: " password
+  printf '\n'
+  [[ -n "$password" ]] || die "password cannot be empty"
+
+  if [[ -r "$PROFILE_FILE" ]]; then
+    IFS= read -r old_profile < "$PROFILE_FILE"
+    [[ -z "$old_profile" || "$old_profile" == "$profile" ]] || keyring_clear_profile "$old_profile"
+  fi
+
+  mkdir -p "$CONFIG_DIR"
+  chmod 700 "$CONFIG_DIR"
+  printf '%s\n' "$profile" > "$PROFILE_FILE"
+  chmod 600 "$PROFILE_FILE"
+
+  printf '%s' "$username" | secret-tool store \
+    --label="OpenVPN username for $profile" \
+    application "$APP_ATTRIBUTE" profile "$profile" kind username
+  printf '%s' "$password" | secret-tool store \
+    --label="OpenVPN password for $profile" \
+    application "$APP_ATTRIBUTE" profile "$profile" kind password
+  unset password
+  log "saved profile and credentials in the system keyring: $profile"
+}
+
+session_exists() {
+  openvpn3 sessions-list 2>/dev/null | awk -v profile="$VPN_PROFILE" '
+    /^[[:space:]]*Config name:/ {
+      sub(/^[[:space:]]*Config name:[[:space:]]*/, "")
+      if ($0 == profile) found = 1
+    }
+    END { exit(found ? 0 : 1) }
+  '
+}
+
+vpn_up() {
+  local username password
+  require_command openvpn3
+  require_command secret-tool
+  read_profile
+  if session_exists; then
+    log "a session already exists for $VPN_PROFILE"
+    openvpn3 sessions-list
+    return 0
+  fi
+  username="$(keyring_lookup username)" || die "saved username not found; run: vpn setup"
+  password="$(keyring_lookup password)" || die "saved password not found; run: vpn setup"
+  [[ -n "$username" && -n "$password" ]] || die "saved credentials are incomplete; run: vpn setup"
+
+  log "connecting: $VPN_PROFILE"
+  printf '%s\n%s\n' "$username" "$password" \
+    | openvpn3 session-start --config "$VPN_PROFILE" --background
+  unset username password
+}
+
+vpn_down() {
+  require_command openvpn3
+  read_profile
+  if ! session_exists; then
+    log "no session exists for $VPN_PROFILE"
+    return 0
+  fi
+  openvpn3 session-manage --config "$VPN_PROFILE" --disconnect
+}
+
+vpn_restart() {
+  require_command openvpn3
+  read_profile
+  session_exists || die "no session exists for $VPN_PROFILE; run: vpn up"
+  openvpn3 session-manage --config "$VPN_PROFILE" --restart
+}
+
+vpn_status() {
+  require_command openvpn3
+  openvpn3 sessions-list
+}
+
+forget_credentials() {
+  require_command secret-tool
+  read_profile
+  keyring_clear_profile "$VPN_PROFILE"
+  rm -f -- "$PROFILE_FILE"
+  log "removed saved profile and credentials"
+}
+
+main() {
+  local command
+  command="$(command_from_name "${1:-}")"
+  [[ "$(basename "$0")" != vpn ]] || shift || true
+  case "$command" in
+    setup) setup_credentials "$@" ;;
+    up) vpn_up ;;
+    down) vpn_down ;;
+    restart) vpn_restart ;;
+    status) vpn_status ;;
+    forget) forget_credentials ;;
+    help|-h|--help|"") usage ;;
+    *) die "unknown command: $command (run: vpn help)" ;;
+  esac
+}
+
+main "$@"

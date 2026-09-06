@@ -102,6 +102,7 @@ scripts/common/15-tmux.sh
 scripts/common/16-zellij.sh
 scripts/common/17-herdr.sh
 scripts/common/18-yazi.sh
+scripts/common/19-openvpn-helper.sh          # optional OpenVPN 3 shortcuts
 scripts/common/20-direnv.sh
 scripts/common/30-python.sh
 scripts/common/40-node.sh
@@ -149,6 +150,11 @@ replace `~/.zshrc` with the project template by running:
 The Nerd Font module installs the four standard `JetBrainsMono Nerd Font`
 styles for the current user. In GNOME Terminal, select `JetBrainsMono Nerd
 Font` rather than its `Mono` or `Propo` variants, then fully reopen the terminal.
+
+For an existing OpenVPN 3 Linux installation, the optional helper provides
+`vpn-up`, `vpn-down`, `vpn-status`, and `vpn-restart`. Run `vpn setup` once;
+credentials are stored in the desktop system keyring and are never written to
+the repository or a plaintext credentials file.
 
 The proxy helper is not an installer. Evaluate its output in the current shell:
 
