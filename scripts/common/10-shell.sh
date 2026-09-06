@@ -14,15 +14,20 @@
 #   - Nerd Fonts: https://www.nerdfonts.com/
 #
 # Important:
-#   - Nerd Fonts must be installed on the host terminal environment, not inside
-#     Ubuntu itself.
-#   - This script does not overwrite your .zshrc automatically unless you choose
-#     to copy the provided dotfile separately.
+#   - Nerd Fonts must be installed on the terminal host. On Linux Mint desktop
+#     this is the current machine; for WSL/OrbStack it is the host OS.
+#   - Existing .zshrc files are preserved unless --install-zshrc-template is
+#     explicitly provided. The original is backed up before replacement.
 # =============================================================================
 set -Eeuo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 ZSH_CUSTOM_DIR="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
+CHANGE_DEFAULT_SHELL="${CHANGE_DEFAULT_SHELL:-false}"
+INSTALL_ZSHRC_TEMPLATE=false
+
+# shellcheck source=../lib/config.sh
+source "${REPO_ROOT}/scripts/lib/config.sh"
 
 clone_or_update() {
   local repo_url="$1"
@@ -37,7 +42,34 @@ clone_or_update() {
   fi
 }
 
+usage() {
+  cat <<'EOF'
+Usage: ./scripts/common/10-shell.sh [--install-zshrc-template]
+
+Options:
+  --install-zshrc-template  Back up and replace an existing ~/.zshrc with the
+                            project template. Without this option, an existing
+                            user configuration is preserved.
+  -h, --help                Show this help.
+EOF
+}
+
+parse_args() {
+  while (($#)); do
+    case "$1" in
+      --install-zshrc-template) INSTALL_ZSHRC_TEMPLATE=true ;;
+      -h|--help) usage; exit 0 ;;
+      *) printf '[10-shell] ERROR: unknown option: %s\n' "$1" >&2; exit 1 ;;
+    esac
+    shift
+  done
+}
+
 main() {
+  parse_args "$@"
+  local zshrc_existed_before_install=false
+  [[ ! -f "$HOME/.zshrc" ]] || zshrc_existed_before_install=true
+
   echo "[10-shell] installing zsh and shell helpers..."
   sudo apt update
   sudo apt install -y zsh git curl fzf
@@ -61,14 +93,15 @@ main() {
     "$ZSH_CUSTOM_DIR/plugins/zsh-completions"
 
   echo "[10-shell] installing dotfiles into ~/.config/shell ..."
-  mkdir -p "$HOME/.config/shell"
-  cp -f "$REPO_ROOT/dotfiles/shell/aliases.zsh" "$HOME/.config/shell/aliases.zsh"
-  cp -f "$REPO_ROOT/dotfiles/shell/exports.zsh" "$HOME/.config/shell/exports.zsh"
-  cp -f "$REPO_ROOT/dotfiles/shell/functions.zsh" "$HOME/.config/shell/functions.zsh"
+  install_config_file "$REPO_ROOT/dotfiles/shell/aliases.zsh" "$HOME/.config/shell/aliases.zsh"
+  install_config_file "$REPO_ROOT/dotfiles/shell/exports.zsh" "$HOME/.config/shell/exports.zsh"
+  install_config_file "$REPO_ROOT/dotfiles/shell/functions.zsh" "$HOME/.config/shell/functions.zsh"
 
-  if [[ ! -f "$HOME/.zshrc" ]]; then
-    cp "$REPO_ROOT/dotfiles/.zshrc" "$HOME/.zshrc"
-    echo "[10-shell] installed starter ~/.zshrc"
+  if ! "$zshrc_existed_before_install" || "$INSTALL_ZSHRC_TEMPLATE"; then
+    # The Oh My Zsh installer creates a starter .zshrc. Replace that generated
+    # file with this template only when the user had no .zshrc before the run.
+    install_config_file "$REPO_ROOT/dotfiles/.zshrc" "$HOME/.zshrc"
+    echo "[10-shell] installed project ~/.zshrc"
   else
     echo "[10-shell] ~/.zshrc already exists; not overwriting."
     echo "[10-shell] compare with: $REPO_ROOT/dotfiles/.zshrc"
@@ -78,16 +111,20 @@ main() {
     cp "$REPO_ROOT/dotfiles/.p10k.zsh" "$HOME/.p10k.zsh"
   fi
 
-  if [[ "$(getent passwd "$USER" | cut -d: -f7)" != "$(command -v zsh)" ]]; then
+  if "$CHANGE_DEFAULT_SHELL" \
+    && [[ "$(getent passwd "$USER" | cut -d: -f7)" != "$(command -v zsh)" ]]; then
     echo "[10-shell] changing default shell to zsh..."
     chsh -s "$(command -v zsh)"
+  elif ! "$CHANGE_DEFAULT_SHELL"; then
+    echo "[10-shell] keeping the current login shell; use --set-default-shell to change it."
   fi
 
   cat <<MSG
 [10-shell] done.
 [10-shell] next steps:
-  1. Install a Nerd Font on the host terminal.
-  2. Start a new terminal session.
+  1. On Linux Mint desktop, run: ./scripts/common/12-nerd-font.sh
+     For WSL/OrbStack, install a Nerd Font on the terminal host OS instead.
+  2. Start zsh manually, or rerun bootstrap with --set-default-shell.
   3. Optionally run: p10k configure
 MSG
 }

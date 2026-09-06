@@ -32,19 +32,36 @@ run_check() {
   "${check_script}"
 }
 
+run_module_check() {
+  local module="$1" check_name="$2"
+  [[ -n "${REQUESTED_MODULES[$module]:-}" ]] || return 0
+  run_check "${CHECKS_DIR}/${check_name}"
+}
+
 main() {
+  local module
+  declare -A REQUESTED_MODULES=()
+  if (($#)); then
+    for module in "$@"; do REQUESTED_MODULES["$module"]=true; done
+  else
+    for module in shell nerd-font tmux zellij herdr yazi python node postgres nginx docker; do
+      REQUESTED_MODULES["$module"]=true
+    done
+  fi
+
   log "running checks..."
 
-  run_check "${CHECKS_DIR}/verify-shell.sh"
-  run_check "${CHECKS_DIR}/verify-tmux.sh"
-  run_check "${CHECKS_DIR}/verify-zellij.sh"
-  run_check "${CHECKS_DIR}/verify-herdr.sh"
-  run_check "${CHECKS_DIR}/verify-yazi.sh"
-  run_check "${CHECKS_DIR}/verify-python.sh"
-  run_check "${CHECKS_DIR}/verify-node.sh"
-  run_check "${CHECKS_DIR}/verify-postgres.sh"
-  run_check "${CHECKS_DIR}/verify-nginx.sh"
-  run_check "${CHECKS_DIR}/verify-docker.sh"
+  run_module_check shell verify-shell.sh
+  run_module_check nerd-font verify-nerd-font.sh
+  run_module_check tmux verify-tmux.sh
+  run_module_check zellij verify-zellij.sh
+  run_module_check herdr verify-herdr.sh
+  run_module_check yazi verify-yazi.sh
+  run_module_check python verify-python.sh
+  run_module_check node verify-node.sh
+  run_module_check postgres verify-postgres.sh
+  run_module_check nginx verify-nginx.sh
+  run_module_check docker verify-docker.sh
 
   log "all checks passed"
 }

@@ -1,11 +1,15 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck source=../scripts/lib/os.sh
+source "${REPO_ROOT}/scripts/lib/os.sh"
+
 echo "[verify-postgres] checking PostgreSQL client..."
 command -v psql >/dev/null
 psql --version
 
-if command -v systemctl >/dev/null 2>&1 && [[ "$(ps -p 1 -o comm= | tr -d ' ')" == "systemd" ]]; then
+if systemd_is_active; then
   echo "[verify-postgres] checking PostgreSQL service status..."
   sudo systemctl is-enabled postgresql >/dev/null 2>&1 || true
   sudo systemctl is-active postgresql >/dev/null 2>&1 || true

@@ -1,11 +1,12 @@
 # Ubuntu Dev Template
 
-A cross-platform Ubuntu development template for:
+A cross-platform Ubuntu-family development template for:
 
 - Windows 11 + WSL 2
 - macOS + OrbStack Ubuntu machines
 - macOS + VMware Fusion Ubuntu virtual machines
 - regular Ubuntu Server installations
+- Linux Mint desktop installations
 
 This repository provides:
 
@@ -24,6 +25,7 @@ This repository provides:
 ## High-level choices
 
 - Shell: zsh + Oh My Zsh + Powerlevel10k
+- Desktop font: JetBrainsMono Nerd Font (native Linux desktop profile)
 - Terminal workspaces: tmux + Zellij + Herdr
 - Terminal file manager: Yazi (latest stable release)
 - Python: system python + venv + pipx + uv
@@ -35,16 +37,46 @@ This repository provides:
   - OrbStack: prefer OrbStack's built-in container engine
 - Workspace root: `~/workspace`
 
-## One-command installation
+## Installation profiles
 
-Run the complete setup from the repository root:
+The bootstrapper reads `/etc/os-release` and chooses a default profile:
+
+- Ubuntu: `server`
+- Linux Mint: `desktop`
+
+The server profile installs the server-oriented modules. The desktop profile
+also installs JetBrainsMono Nerd Font, but leaves Docker, PostgreSQL, and nginx
+opt-in. Neither profile changes the login shell unless `--set-default-shell` is
+provided.
+
+Run the detected default from the repository root:
 
 ```bash
 ./bootstrap.sh
 ```
 
-The script detects regular Ubuntu, WSL, or OrbStack automatically. Preview the
-full execution order without changing the system:
+Choose a profile or customize its modules:
+
+```bash
+./bootstrap.sh --profile desktop
+./bootstrap.sh --profile desktop --with docker,postgres
+./bootstrap.sh --profile server --skip nginx
+./bootstrap.sh --profile desktop --set-default-shell
+```
+
+Available modules are `base`, `shell`, `nerd-font`, `tmux`, `zellij`, `herdr`,
+`yazi`, `direnv`, `python`, `node`, `db-clients`, `postgres`, `nginx`, `docker`,
+and `devtools`.
+
+Before replacing an existing distro-provided Docker installation, inspect the
+reported conflicting packages and explicitly approve their removal:
+
+```bash
+./bootstrap.sh --with docker --replace-docker-packages
+```
+
+The script also detects native Linux, WSL, or OrbStack automatically. Preview
+the execution plan without changing the system:
 
 ```bash
 ./bootstrap.sh --dry-run
@@ -55,11 +87,12 @@ On WSL without systemd, the first run writes `/etc/wsl.conf` and stops. Run
 
 ## Individual installation
 
-`00-base.sh` and `10-shell.sh` are the required foundation. Run both first:
+`00-base.sh` is the required foundation. Install the shell layer if wanted:
 
 ```bash
 ./scripts/common/00-base.sh
 ./scripts/common/10-shell.sh
+./scripts/common/12-nerd-font.sh             # native Linux desktop
 ```
 
 Then run the modules you want. Every module remains a separate install script:
@@ -90,7 +123,8 @@ For VMware Fusion or another regular Ubuntu VM, install Docker directly with:
 ```
 
 Open a new login session after Docker installation so membership in the
-`docker` group takes effect.
+`docker` group takes effect. Docker's Ubuntu repository is configured with the
+underlying Ubuntu codename (`UBUNTU_CODENAME` on Linux Mint).
 
 The terminal tools can coexist. They are not configured to start or nest one
 another automatically:
@@ -104,6 +138,18 @@ Zellij, Herdr, and Yazi install their latest stable release to `~/.local/bin`.
 Release checksums are verified before installation. Existing user configuration
 is backed up before the template configuration is installed.
 
+The shell template adds `~/.local/bin` and `~/bin` to interactive zsh sessions
+and loads nvm from `~/.nvm`. On an existing installation, explicitly back up and
+replace `~/.zshrc` with the project template by running:
+
+```bash
+./scripts/common/10-shell.sh --install-zshrc-template
+```
+
+The Nerd Font module installs the four standard `JetBrainsMono Nerd Font`
+styles for the current user. In GNOME Terminal, select `JetBrainsMono Nerd
+Font` rather than its `Mono` or `Propo` variants, then fully reopen the terminal.
+
 The proxy helper is not an installer. Evaluate its output in the current shell:
 
 ```bash
@@ -113,7 +159,10 @@ eval "$(python3 scripts/common/99-proxy-switch.py off)"
 
 ## Important notes
 
-- **Fonts are installed on the host OS**, not inside WSL/Ubuntu.
+- **Fonts are installed on the terminal host OS**, not inside WSL or an
+  OrbStack guest. Do not opt into `nerd-font` inside those guests.
+- On Linux Mint desktop, the desktop itself is the host and the desktop profile
+  installs JetBrainsMono Nerd Font into `~/.local/share/fonts`.
 - On WSL, keep active projects under the Linux filesystem, e.g. `~/workspace`, not primarily under `/mnt/c/...`.
 - On OrbStack, keep Ubuntu-side paths and shell workflows aligned with WSL.
 - Docker Engine officially supports Ubuntu 26.04 Resolute; the installer derives
@@ -137,3 +186,11 @@ These scripts follow the official docs as closely as practical:
 - Zellij installation: https://zellij.dev/documentation/installation.html
 - Herdr installation: https://herdr.dev/docs/install/
 - Yazi installation: https://yazi-rs.github.io/docs/installation
+
+## Development checks
+
+Run the profile and OS-detection smoke tests without installing packages:
+
+```bash
+./tests/test-bootstrap.sh
+```

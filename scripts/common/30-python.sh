@@ -24,14 +24,18 @@ set -Eeuo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
+# shellcheck source=../lib/config.sh
+source "${REPO_ROOT}/scripts/lib/config.sh"
+
 main() {
   echo "[30-python] installing python packages from apt..."
   sudo apt update
   sudo apt install -y python3 python3-venv python3-pip pipx
 
   echo "[30-python] ensuring pip config exists..."
-  mkdir -p "$HOME/.config/pip"
-  cp -f "$REPO_ROOT/dotfiles/.config/pip/pip.conf" "$HOME/.config/pip/pip.conf"
+  install_config_file \
+    "$REPO_ROOT/dotfiles/.config/pip/pip.conf" \
+    "$HOME/.config/pip/pip.conf"
 
   echo "[30-python] ensuring pipx path..."
   python3 -m pipx ensurepath || true

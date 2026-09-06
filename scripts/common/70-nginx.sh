@@ -16,6 +16,10 @@
 set -Eeuo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+# shellcheck source=../lib/os.sh
+source "${REPO_ROOT}/scripts/lib/os.sh"
+# shellcheck source=../lib/config.sh
+source "${REPO_ROOT}/scripts/lib/config.sh"
 
 main() {
   echo "[70-nginx] installing nginx..."
@@ -23,10 +27,12 @@ main() {
   sudo apt install -y nginx
 
   echo "[70-nginx] installing project nginx templates under ~/workspace/infra/nginx-templates..."
-  mkdir -p "$HOME/workspace/infra/nginx-templates"
-  cp -f "$REPO_ROOT/templates/nginx/"*.conf "$HOME/workspace/infra/nginx-templates/"
+  local template
+  for template in "$REPO_ROOT/templates/nginx/"*.conf; do
+    install_config_file "$template" "$HOME/workspace/infra/nginx-templates/$(basename "$template")"
+  done
 
-  if command -v systemctl >/dev/null 2>&1 && [[ "$(ps -p 1 -o comm= | tr -d ' ')" == "systemd" ]]; then
+  if systemd_is_active; then
     sudo systemctl enable nginx || true
     sudo systemctl start nginx || true
   fi

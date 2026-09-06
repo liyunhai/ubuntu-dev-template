@@ -3,8 +3,8 @@
 ## Layered model
 
 ### L0 Host / virtualization
-- WSL 2 on Windows 11, OrbStack on macOS, or a regular Ubuntu VM
-- Ubuntu Server base machine
+- WSL 2 on Windows 11, OrbStack on macOS, a regular Ubuntu VM, or Linux Mint
+- Ubuntu Server or Linux Mint desktop base machine
 - systemd enabled where appropriate
 
 ### L1 Base packages
@@ -15,6 +15,7 @@ Common tools used by everything else:
 - zsh
 - Oh My Zsh
 - Powerlevel10k
+- JetBrainsMono Nerd Font on native Linux desktops
 - zsh plugins
 - tmux
 - Zellij
@@ -52,3 +53,18 @@ Common tools used by everything else:
 - service configs
 - compose examples
 - verification scripts
+
+## Profiles and platform detection
+
+`bootstrap.sh` separates the OS, runtime platform, and install profile:
+
+- OS controls compatibility and the Ubuntu repository codename. Both Ubuntu
+  and Linux Mint are supported.
+- Platform controls WSL and OrbStack integration; other systems are `native`.
+- Profile controls module selection. `server` includes services and Docker;
+  `desktop` adds the local Nerd Font while keeping Docker, PostgreSQL, and nginx
+  opt-in.
+
+Profiles only select shared modules. Distribution-specific scripts should be
+added only when behavior genuinely cannot be expressed by the helpers under
+`scripts/lib`.

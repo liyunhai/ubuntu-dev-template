@@ -1,6 +1,6 @@
 # ~/.zshrc
 #
-# Shared zsh configuration for WSL Ubuntu 24.04 and OrbStack Ubuntu machines.
+# Shared zsh configuration for Ubuntu and Linux Mint development machines.
 #
 # Design goals:
 # - readable and easy to modify
@@ -42,8 +42,10 @@ export NVM_DIR="$HOME/.nvm"
 [[ -s "$NVM_DIR/nvm.sh" ]] && source "$NVM_DIR/nvm.sh"
 [[ -s "$NVM_DIR/bash_completion" ]] && source "$NVM_DIR/bash_completion"
 
-# direnv hook. Required after direnv installation.
-eval "$(direnv hook zsh)"
+# direnv hook. It becomes active after the direnv module is installed.
+if command -v direnv >/dev/null 2>&1; then
+  eval "$(direnv hook zsh)"
+fi
 
 # uv (Astral) default binary path lives under ~/.local/bin for standalone install.
 # Nothing special is required if PATH already includes ~/.local/bin.

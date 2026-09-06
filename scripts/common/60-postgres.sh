@@ -18,12 +18,16 @@
 # =============================================================================
 set -Eeuo pipefail
 
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+# shellcheck source=../lib/os.sh
+source "${REPO_ROOT}/scripts/lib/os.sh"
+
 main() {
   echo "[60-postgres] installing PostgreSQL..."
   sudo apt update
   sudo apt install -y postgresql postgresql-client
 
-  if command -v systemctl >/dev/null 2>&1 && [[ "$(ps -p 1 -o comm= | tr -d ' ')" == "systemd" ]]; then
+  if systemd_is_active; then
     echo "[60-postgres] enabling PostgreSQL service..."
     sudo systemctl enable postgresql || true
     sudo systemctl start postgresql || true

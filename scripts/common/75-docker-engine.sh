@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+# shellcheck source=../lib/os.sh
+source "${REPO_ROOT}/scripts/lib/os.sh"
+
 DOCKER_KEYRING="/etc/apt/keyrings/docker.asc"
 DOCKER_SOURCE="/etc/apt/sources.list.d/docker.list"
+ALLOW_DOCKER_PACKAGE_REPLACEMENT="${ALLOW_DOCKER_PACKAGE_REPLACEMENT:-false}"
 
 log() { printf '[75-docker] %s\n' "$*"; }
 die() { printf '[75-docker] ERROR: %s\n' "$*" >&2; exit 1; }
@@ -13,21 +18,26 @@ check_environment() {
   if [[ "$(uname -r)" == *[Oo]rbstack* ]] || [[ -e /opt/orbstack-guest ]]; then
     die "OrbStack detected; use its built-in Docker engine"
   fi
-  [[ -r /etc/os-release ]] || die "/etc/os-release not found"
-
-  # shellcheck disable=SC1091
-  source /etc/os-release
-  [[ "${ID:-}" == "ubuntu" ]] || die "this installer supports Ubuntu only (detected: ${ID:-unknown})"
-  [[ -n "${VERSION_CODENAME:-}" ]] || die "Ubuntu VERSION_CODENAME is missing"
-  [[ "$(ps -p 1 -o comm= | tr -d ' ')" == "systemd" ]] \
-    || die "systemd is not active; enable it before installing Docker Engine"
+  require_supported_ubuntu_family || exit 1
+  systemd_is_active || die "systemd is not active; enable it before installing Docker Engine"
 }
 
 remove_conflicting_packages() {
-  local package
-  log "removing conflicting distribution packages when present..."
+  local package status
+  local -a installed=()
   for package in docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc; do
-    sudo apt remove -y "$package" >/dev/null 2>&1 || true
+    status="$(dpkg-query -W -f='${db:Status-Status}' "$package" 2>/dev/null || true)"
+    [[ "$status" == installed ]] && installed+=("$package")
+  done
+
+  ((${#installed[@]})) || return 0
+  if ! "$ALLOW_DOCKER_PACKAGE_REPLACEMENT"; then
+    die "conflicting packages are installed: ${installed[*]}. Review them, then rerun bootstrap with --replace-docker-packages if Docker CE should replace them"
+  fi
+
+  log "removing explicitly approved conflicting packages: ${installed[*]}"
+  for package in "${installed[@]}"; do
+    sudo apt remove -y "$package"
   done
 }
 
@@ -39,9 +49,8 @@ configure_repository() (
   source_file="${tmpdir}/docker.list"
   arch="$(dpkg --print-architecture)"
 
-  # shellcheck disable=SC1091
-  source /etc/os-release
-  codename="$VERSION_CODENAME"
+  load_os_release
+  codename="$UBUNTU_BASE_CODENAME"
 
   log "installing Docker's official apt signing key..."
   curl -fsSL --retry 3 https://download.docker.com/linux/ubuntu/gpg -o "$key_file"
@@ -86,6 +95,7 @@ main() {
   require_command apt
   require_command curl
   require_command dpkg
+  require_command dpkg-query
   require_command systemctl
   check_environment
 

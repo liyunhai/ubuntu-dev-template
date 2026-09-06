@@ -17,16 +17,21 @@ set -Eeuo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
+# shellcheck source=../lib/config.sh
+source "${REPO_ROOT}/scripts/lib/config.sh"
+
 main() {
   echo "[20-direnv] installing direnv..."
   sudo apt update
   sudo apt install -y direnv
 
   echo "[20-direnv] installing config..."
-  mkdir -p "$HOME/.config/direnv"
-  cp -f "$REPO_ROOT/dotfiles/.config/direnv/direnv.toml" "$HOME/.config/direnv/direnv.toml"
+  install_config_file \
+    "$REPO_ROOT/dotfiles/.config/direnv/direnv.toml" \
+    "$HOME/.config/direnv/direnv.toml"
 
   if ! grep -q 'direnv hook zsh' "$HOME/.zshrc" 2>/dev/null; then
+    [[ ! -f "$HOME/.zshrc" ]] || backup_config_file "$HOME/.zshrc"
     cat >> "$HOME/.zshrc" <<'ZEOF'
 
 # direnv shell integration
